@@ -48,17 +48,15 @@ class PageCreateView(CreateView):
       return render(request, 'create_page.html', {'form': form})
 
 
-def PageEdit(request, id=None):
-    instance = get_object_or_404(Post, id=id)
-    form = PageForm(request.POST)
-    if form.is_valid():
-        instance = form.save()
-        instance.save()
-    context = {
-        "title": instance.title,
-        "content": instance.content,
-        "author": instance.author,
-        "instance": instance,
-        "form": form,
-    }
-    return render(request, "edit_page.html", context)
+def PageEdit(request, slug):
+    page = get_object_or_404(Page, slug=slug)
+    form = PageForm(request.POST, instance=page)  
+    if request.method == "POST":
+        if form.is_valid():
+            page = form.save(commit=False)
+            page.save()
+            return HttpResponseRedirect(reverse_lazy('wiki-details-page', args=[page.slug]))
+        else:
+            form = PostForm(instance=page)
+    return render(request, 'create_page.html', {'form': form})
+
