@@ -8,6 +8,8 @@
       <p>{{ page.content|linebreaksbr }}</p>
       <hr>
       <a href="{% url 'wiki-list-page' %}">Back to List</a>
+      <div class="text-left"><a href="{% url 'wiki-edit-page' page.slug %}" title="Edit">Edit</a></div>
+
     </div>
   </div>
 {% endblock %}
