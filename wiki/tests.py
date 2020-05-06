@@ -2,6 +2,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from wiki.models import Page
+from .forms import *
 
 class WikiTestCase(TestCase):
     def test_true_is_true(self):
@@ -34,7 +35,7 @@ class PageListViewTests(TestCase):
 
         # Issue a GET request to the MakeWiki homepage.
         # When we make a request, we get a response back.
-        response = self.client.get('/')
+        response = self.client.get('')
 
         # Check that the response is 200 OK.
         self.assertEqual(response.status_code, 200)
@@ -49,3 +50,68 @@ class PageListViewTests(TestCase):
             ['<Page: My Test Page>', '<Page: Another Test Page>'],
             ordered=False
         )
+
+
+class SinglePageTest(TestCase):
+    def test_single_page(self):
+        user = User.objects.create()
+
+        Page.objects.create(title='Test Page', content='test', author=user)
+
+        response = self.client.get('/test-page/')
+
+        self.assertEqual(response.status_code, 200)
+
+        response = response.context['page']
+        
+        self.assertEqual(str(response), 'Test Page')
+
+
+class ViewFormTest(TestCase):
+    def test_view_form_page(self):
+        response = self.client.get('/create/')
+        # Check request succeeded
+        self.assertEqual(response.status_code, 200)
+        # Check content
+        self.assertIn(b'Title of your page', response.content)
+
+
+class PageCreateTest(TestCase):
+    def test_create_page(self):
+        user = User.objects.create()
+
+        data = {
+            'title': 'Test Page',
+            'content': 'a test page',
+            'author': user.id
+        }
+
+        response = self.client.post('/create/', data=data)
+        self.assertEqual(response.status_code, 302)
+
+        item = Page.objects.get(title='Test Page')
+        self.assertEqual(item.title, 'Test Page')
+        
+
+class PageEditTest(TestCase):
+    def test_edit(self):
+        # Make some test data to be displayed on the page.
+        user = User.objects.create()
+
+        Page.objects.create(title="Computer", content="Trying to understand 0s and 1s", author=user)
+
+        form_details = {
+            'title': "Computer Science",
+            'content': "Finally understanding 0s and 1s",
+        }
+        #Testing if the initial page is created
+        response = self.client.get('/Computer', follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        #Submitting the text to be updated
+        response = self.client.post('/Computer', form_details)
+        self.assertEqual(response.status_code, 302)
+
+        #Checking the updated object
+        # page = Page.objects.get(title="Computer Science")
+        # self.assertEqual(page.content, "Finally understanding 0s and 1s")
